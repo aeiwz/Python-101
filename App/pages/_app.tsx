@@ -1,22 +1,33 @@
+// pages/_app.tsx
 import type { AppProps } from "next/app";
 import "@/styles/globals.css";
-import Footer from "@/components/Footer"
-
-// Bootstrap & Icons via CDN in Head
+import Footer from "@/components/Footer";
 import Head from "next/head";
 import { useEffect, useState } from "react";
+import { ImCool } from "react-icons/im";
+import { SiGooglecolab, SiJupyter, SiPython } from "react-icons/si";
+
+type Theme = "light" | "dark";
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [theme, setTheme] = useState<Theme>("dark");
 
+  // Initial theme: localStorage -> OS preference -> "dark"
   useEffect(() => {
-    const saved = (localStorage.getItem("theme") as "light" | "dark") || "dark";
-    setTheme(saved);
-    document.documentElement.setAttribute("data-bs-theme", saved);
+    const saved = (localStorage.getItem("theme") as Theme | null);
+    const system: Theme =
+      window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches
+        ? "light" : "dark";
+    const initial = saved ?? system;
+    setTheme(initial);
+    document.documentElement.setAttribute("data-bs-theme", initial); // Bootstrap
+    document.documentElement.setAttribute("data-theme", initial);    // YOUR CSS
   }, []);
 
+  // Apply on changes
   useEffect(() => {
     document.documentElement.setAttribute("data-bs-theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
 
@@ -29,19 +40,34 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
         <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-        <title>Python Programming 101</title>
+        <title>Python Programming1< ImCool />1</title>
+
+        {/* Prevent flash of wrong theme on first paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function(){
+  try {
+    var t = localStorage.getItem('theme');
+    if (!t) {
+      t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    document.documentElement.setAttribute('data-bs-theme', t);
+    document.documentElement.setAttribute('data-theme', t);
+  } catch(e) {}
+}());
+            `.trim()
+          }}
+        />
       </Head>
 
       <div className="container py-3">
         <nav className="navbar navbar-expand-lg border-bottom mb-3">
           <div className="container-fluid">
             <a className="navbar-brand fw-bold" href="/">
-              <i className="bi bi-cpu me-2"/>Python 101
+              <i className="bi "/> < SiPython /> Python 1 <ImCool /> 1
             </a>
             <div className="d-flex gap-2">
-              <a href="/examples" className="btn btn-outline-secondary btn-sm">
-                <i className="bi bi-journal-code"/> Examples
-              </a>
               <a href="/console" className="btn btn-outline-secondary btn-sm">
                 <i className="bi bi-terminal"/> Console
               </a>

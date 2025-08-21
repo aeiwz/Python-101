@@ -1,5 +1,9 @@
-import Footer from "@/components/Footer";
-import { FaHome, FaRobot, FaTerminal, FaCode, FaDatabase, FaMicrochip } from "react-icons/fa";
+import { ImCool } from "react-icons/im";
+import {
+  FaRobot,
+  FaTerminal,
+  FaBookOpen
+} from "react-icons/fa";
 import { IoRocketOutline } from "react-icons/io5";
 
 export default function Home() {
@@ -13,12 +17,12 @@ export default function Home() {
               Learn <span className="brand-grad">Python</span> - Build Anything.
             </h1>
             <p className="lead text-secondary mb-4 mx-auto" style={{ maxWidth: 820 }}>
-              From programming basics to data analysis and machine learning with scikit-learn.
+              From programming basics to data analysis and machine learning.
             </p>
 
             <div className="d-flex justify-content-center gap-3 flex-wrap">
-              <a href="/sklearn-demo" className="btn btn-primary btn-lg d-flex align-items-center gap-2">
-                <FaRobot /> Try scikit-learn Demo
+              <a href="/notebooks" className="btn btn-primary btn-lg d-flex align-items-center gap-2">
+                <FaRobot /> Open notebook
               </a>
               <a href="/console" className="btn btn-outline-primary btn-lg d-flex align-items-center gap-2">
                 <FaTerminal /> Open Python Console
@@ -28,45 +32,33 @@ export default function Home() {
 
           {/* Feature cards */}
           <section className="mt-5">
-            <div className="row row-cols-1 row-cols-md-3 g-3">
-              <div className="col">
+            <div className="row justify-content-center g-3">
+              {/* Data 101 → Notebooks */}
+              <div className="col-12 col-md-4">
                 <div className="card h-100 glow-tile">
                   <div className="card-body">
                     <h5 className="card-title d-flex align-items-center gap-2">
-                      <FaCode /> Python 101
+                      <FaBookOpen /> Python 1 <ImCool /> 1
                     </h5>
                     <p className="text-secondary mb-3">
-                      Variables, control flow, functions, and problem-solving with code.
+                      Open the full set of course notebooks (Python basics, data types, bioinformatics, and ML).
                     </p>
-                    <a className="link-primary" href="/examples#python101">Start coding →</a>
+                    <a className="link-primary" href="/notebooks">Open notebooks →</a>
                   </div>
                 </div>
               </div>
 
-              <div className="col">
+              {/* Console → Console page */}
+              <div className="col-12 col-md-4">
                 <div className="card h-100 glow-tile">
                   <div className="card-body">
                     <h5 className="card-title d-flex align-items-center gap-2">
-                      <FaDatabase /> Data Types & Structures
+                      <FaTerminal /> Console
                     </h5>
                     <p className="text-secondary mb-3">
-                      Lists, dictionaries, sets, tuples — learn how to manage and organize data.
+                      Run quick experiments in the browser console: evaluate code, print results, and debug ideas.
                     </p>
-                    <a className="link-primary" href="/examples#datastruct">Explore examples →</a>
-                  </div>
-                </div>
-              </div>
-
-              <div className="col">
-                <div className="card h-100 glow-tile">
-                  <div className="card-body">
-                    <h5 className="card-title d-flex align-items-center gap-2">
-                      <FaMicrochip /> Data → ML
-                    </h5>
-                    <p className="text-secondary mb-3">
-                      From raw data to predictive models — pandas workflows & scikit-learn pipelines.
-                    </p>
-                    <a className="link-primary" href="/sklearn-demo">Try demo →</a>
+                    <a className="link-primary" href="/console">Open console →</a>
                   </div>
                 </div>
               </div>

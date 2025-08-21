@@ -1,136 +1,168 @@
-import { useEffect, useState } from "react";
+// pages/console.tsx
+import { useEffect, useRef, useState } from "react";
+import { FiHome } from "react-icons/fi"
 
-const EXAMPLES: Record<string, string> = {
-  hello: `# Hello World Example
-print("Hello, Python 101 🚀")`,
+type ExampleMeta = { filename: string; slug: string; title: string; summary: string; };
 
-  loop: `# Loop Example
-for i in range(5):
-    print("Counting:", i)`,
-
-  datastruct: `# Data Structures Example
-nums = [3, 1, 4, 1, 5, 9]
-unique = set(nums)
-person = {"name": "Alice", "age": 21}
-print("nums:", nums)
-print("unique:", unique)
-print("person:", person)`,
-
-  pandas: `# Pandas Basics Example
-import pandas as pd
-data = {"name": ["Alice", "Bob", "Cara"], "age": [18, 19, 20]}
-df = pd.DataFrame(data)
-print(df)
-print("Average age:", df["age"].mean())`,
-
-  sklearn: `# Simple scikit-learn demo
-from sklearn.linear_model import LinearRegression
-import numpy as np
-
-X = np.array([[1], [2], [3], [4]])
-y = [2.1, 4.1, 6.0, 8.2]
-
-model = LinearRegression().fit(X, y)
-print("coef:", model.coef_, "intercept:", model.intercept_)
-print("pred:", model.predict(X))`,
-};
-
-export default function Console() {
-  const [code, setCode] = useState(EXAMPLES.hello);
+export default function ConsolePage() {
+  const [items, setItems] = useState<ExampleMeta[]>([]);
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<ExampleMeta | null>(null);
+  const [code, setCode] = useState<string>("");
   const [out, setOut] = useState<string>("(loading Python runtime…)\n");
   const [ready, setReady] = useState(false);
 
+  // Keep a single Pyodide instance across renders
+  const pyodideRef = useRef<any>(null);
+
+  const append = (s: string) => setOut((o) => o + (s.endsWith("\n") ? s : s + "\n"));
+
+  // Load examples list once
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js";
-    script.onload = async () => {
-      // @ts-ignore
-      const pyodide = await window.loadPyodide({
-        stdout: (s: string) => setOut((o) => o + s + "\n"),
-        stderr: (s: string) => setOut((o) => o + s + "\n"),
-      });
-      // @ts-ignore
-      (window as any)._pyodide = pyodide;
-      setReady(true);
-      setOut((o) => o + "Python ready.\n");
-    };
-    document.head.appendChild(script);
+    fetch("/api/examples")
+      .then(r => r.json())
+      .then(d => {
+        setItems(d.items || []);
+        if (d.items?.length) choose(d.items[0]); // auto-select first
+      })
+      .catch(() => setItems([]));
   }, []);
 
+  // Load Pyodide once (StrictMode‑safe)
+  useEffect(() => {
+    let mounted = true;
+    const SCRIPT_ID = "pyodide-0-26-1";
+    const ensureScript = () =>
+      new Promise<void>((resolve, reject) => {
+        if (document.getElementById(SCRIPT_ID)) return resolve();
+        const el = document.createElement("script");
+        el.id = SCRIPT_ID;
+        el.src = "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js";
+        el.onload = () => resolve();
+        el.onerror = () => reject(new Error("Failed to load Pyodide script"));
+        document.head.appendChild(el);
+      });
+
+    (async () => {
+      try {
+        if (pyodideRef.current) return;
+        await ensureScript();
+        // @ts-ignore
+        const py = await window.loadPyodide({
+          stdout: (s: string) => append(s),
+          stderr: (s: string) => append(s),
+        });
+        pyodideRef.current = py;
+        if (mounted) {
+          append("Python ready.");
+          setReady(true);
+        }
+      } catch (e: any) {
+        append("Error loading Python: " + e.message);
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, []);
+
+  // Pick an example and fetch its code
+  function choose(meta: ExampleMeta) {
+    setSelected(meta);
+    setCode("# Loading…");
+    setOut(ready ? "" : "(loading Python runtime…)\n");
+    fetch(`/api/examples/${meta.slug}`)
+      .then(r => (r.ok ? r.text() : Promise.reject("not found")))
+      .then(txt => setCode(txt))
+      .catch(() => setCode("# Example not found"));
+  }
+
   async function run() {
-    // @ts-ignore
-    const pyodide = (window as any)._pyodide;
-    if (!pyodide) return;
-    setOut("");
+    const py = pyodideRef.current;
+    if (!py) return;
+    setOut(""); // fresh run
     try {
-      await pyodide.runPythonAsync(code);
-    } catch (e) {
-      setOut((o) => o + (e as any).toString());
+      await py.runPythonAsync(code);
+    } catch (e: any) {
+      append(String(e));
     }
   }
 
-  function clearOut() {
-    setOut("");
-  }
+  const filtered = query.trim()
+    ? items.filter(x =>
+        x.title.toLowerCase().includes(query.toLowerCase()) ||
+        x.filename.toLowerCase().includes(query.toLowerCase()) ||
+        x.summary.toLowerCase().includes(query.toLowerCase()))
+    : items;
 
   return (
     <main className="container py-4">
-      {/* Navbar */}
       <nav className="navbar navbar-expand-lg border-bottom mb-4">
         <div className="container-fluid">
           <a href="/" className="btn btn-outline-secondary btn-sm">
-            Home
+            <i className="bi" /> < FiHome /> Back
           </a>
-          <span className="navbar-text ms-3 fw-bold">
-            Python Console
-          </span>
+          <span className="navbar-text ms-3 fw-bold">Python Console</span>
+          <div className="ms-auto small text-secondary">
+            {ready ? <span className="text-success">● Ready</span> : <span>● Loading…</span>}
+          </div>
         </div>
       </nav>
 
-      <h1 className="h3 mb-3">In-Browser Python Console</h1>
-      <p className="text-secondary">
-        Choose an example or write Python code below and run it instantly. Powered by Pyodide.
-      </p>
-
       <div className="row g-3">
-        {/* Sidebar with examples */}
+        {/* Sidebar */}
         <div className="col-md-3">
-          <div className="list-group">
-            {Object.keys(EXAMPLES).map((key) => (
+          <input
+            className="form-control form-control-sm mb-2"
+            placeholder="Search…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <div className="list-group" style={{ maxHeight: 500, overflow: "auto" }}>
+            {filtered.map((ex) => (
               <button
-                key={key}
-                className="list-group-item list-group-item-action"
-                onClick={() => setCode(EXAMPLES[key])}
+                key={ex.slug}
+                className={`list-group-item list-group-item-action${selected?.slug === ex.slug ? " active" : ""}`}
+                onClick={() => choose(ex)}
+                title={ex.summary}
               >
-                {key}
+                {ex.title}
               </button>
             ))}
+            {!filtered.length && <div className="text-secondary small p-2">No matches</div>}
           </div>
         </div>
 
         {/* Editor + Output */}
         <div className="col-md-9">
-          <label className="form-label small text-secondary">Editor</label>
+          <label className="form-label small text-secondary">
+            Editor {selected ? `• ${selected.title}` : ""}
+          </label>
           <textarea
-            className="form-control editor"
-            style={{ minHeight: 220 }}
+            className="form-control"
+            style={{ minHeight: 280, fontFamily: "ui-monospace, Menlo, monospace" }}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             spellCheck={false}
           />
+
           <div className="d-flex gap-2 mt-2">
             <button className="btn btn-primary" onClick={run} disabled={!ready}>
               Run
             </button>
-            <button className="btn btn-outline-secondary" onClick={clearOut}>
+            <button className="btn btn-outline-secondary" onClick={() => setOut("")}>
               Clear
             </button>
           </div>
 
           <label className="form-label small text-secondary mt-3">Console Output</label>
-          <pre className="console border rounded p-2" style={{ height: 260, overflow: "auto" }}>
+          <pre className="border rounded p-2" style={{ height: 280, overflow: "auto", whiteSpace: "pre-wrap" }}>
             {out}
           </pre>
+
+          <div className="alert alert-warning mt-3 small mb-0">
+            ⚠️ Pyodide can’t install heavy native packages like <code>pandas</code> or <code>scikit‑learn</code>.
+            For those, open a Colab/Binder notebook instead.
+          </div>
         </div>
       </div>
     </main>
