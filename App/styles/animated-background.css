@@ -100,3 +100,25 @@ body{
   background: color-mix(in oklab, var(--abg-link), transparent 70%);
   color: var(--abg-ink);
 }
+
+.abg-canvas{
+  position: fixed;
+  /* robust viewport sizing on mobile */
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw;
+
+  /* modern units first, then fallbacks */
+  height: 100dvh;   /* iOS 16+/modern */
+  height: 100svh;   /* small viewport */
+  height: calc(var(--vh, 1vh) * 100); /* JS polyfill fallback */
+  height: 100vh;    /* last resort */
+
+  pointer-events: none;
+  z-index: 0;
+  display: block;
+
+  /* nudge GPU compositing on iOS */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
