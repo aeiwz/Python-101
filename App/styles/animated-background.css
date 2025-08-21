@@ -1,0 +1,102 @@
+/* styles/animated-background.css
+   Animated canvas background + dark/light theme vars
+   ------------------------------------------------- */
+
+/* ========= Light defaults ========= */
+:root{
+  /* Page background (seen under the canvas) */
+  --abg-bg: #f7fafc;
+
+  /* Particle dot color */
+  --abg-dot: #475569;          /* slate-600 */
+
+  /* Line color between nearby particles (with alpha) */
+  --abg-link: #64748b44;       /* slate-500 @ ~27% */
+
+  /* Soft radial edge glow (with alpha) */
+  --abg-glow: #60a5fa33;       /* sky-400 @ ~20% */
+
+  /* Optional: content base text color (if you want to use it) */
+  --abg-ink: #0f172a;          /* slate-900 */
+}
+
+/* ========= Dark overrides ========= */
+/* Works if you toggle .dark on <html> or <body> */
+.dark{
+  --abg-bg: #0b1020;
+  --abg-dot: #cbd5e1;          /* slate-300 */
+  --abg-link: #93c5fd33;       /* sky-300 @ ~20% */
+  --abg-glow: #2563eb33;       /* blue-600 @ ~20% */
+  --abg-ink: #e2e8f0;          /* slate-200 */
+}
+
+/* Optional: auto-dark fallback for users who prefer dark
+   (won’t override explicit .dark/.light classes) */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark){
+    --abg-bg: #0b1020;
+    --abg-dot: #cbd5e1;
+    --abg-link: #93c5fd33;
+    --abg-glow: #2563eb33;
+    --abg-ink: #e2e8f0;
+  }
+}
+
+/* ========= Canvas layer ========= */
+/* Full-viewport, fixed, behind content, no pointer events */
+.abg-canvas{
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;                 /* keep below your UI */
+  display: block;             /* ensure no inline gaps */
+}
+
+/* Content wrapper so your UI stays above the canvas */
+.abg-content{
+  position: relative;
+  z-index: 1;
+}
+
+/* ========= Page base ========= */
+html, body{
+  min-height: 100%;
+}
+body{
+  background: var(--abg-bg);
+  color: var(--abg-ink);
+}
+
+/* If you use Bootstrap or other frameworks with fixed headers/footers,
+   you generally don’t need extra z-index tweaks because .abg-canvas is 0
+   and your content is 1 via .abg-content. If you have other fixed layers,
+   ensure their z-index >= 1. */
+
+/* ========= Reduced motion ========= */
+@media (prefers-reduced-motion: reduce) {
+  .abg-canvas { display: none; }
+}
+
+/* ========= Optional helpers ========= */
+/* Utility to give any block a soft translucent card look that
+   plays nicely with both themes; use as needed. */
+.abg-card{
+  background: color-mix(in oklab, var(--abg-bg) 75%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid color-mix(in oklab, var(--abg-link), transparent 60%);
+  border-radius: 14px;
+}
+
+/* Small badge for “Ready/Loading” pills */
+.abg-pill{
+  display: inline-block;
+  padding: .15rem .5rem;
+  border-radius: 999px;
+  font-size: .825rem;
+  line-height: 1;
+  background: color-mix(in oklab, var(--abg-link), transparent 70%);
+  color: var(--abg-ink);
+}
