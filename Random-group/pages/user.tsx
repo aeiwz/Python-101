@@ -117,7 +117,7 @@ export default function UserPage() {
       {!didRedeem && (
         <div className="controls">
           <button className="primary" onClick={draw} aria-label="Draw random">
-            <FaDice /> Draw random
+            <FaDice /> Read your sequence
           </button>
           <button onClick={redeem} aria-label="Redeem current card" disabled={!pick}>
             <BiTestTube /> Redeem
