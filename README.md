@@ -1,9 +1,9 @@
 <!-- Button -->
-[![Open Notebooks](https://img.shields.io/badge/Open%20Notebooks-Launch-blue?style=for-the-badge&logo=jupyter&logoColor=white)](https://python101-sage.vercel.app/notebooks)
+[![Open Notebooks](https://img.shields.io/badge/Open%20Notebooks-Launch-blue?style=for-the-badge&logo=jupyter&logoColor=white)](https://python101-sage.vercel.app)
 
 <!-- QR code (auto-switches for dark/light GitHub themes) -->
 <p align="center">
-  <a href="https://python101-sage.vercel.app/notebooks">
+  <a href="https://python101-sage.vercel.app">
     <picture>
       <!-- dark mode -->
       <source media="(prefers-color-scheme: dark)" srcset="https://quickchart.io/qr?text=https%3A%2F%2Fpython101-sage.vercel.app%2Fnotebooks&dark=ffffff&light=111111&ecLevel=Q&size=220">
