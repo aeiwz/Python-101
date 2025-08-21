@@ -38,7 +38,7 @@ export default function Home() {
                 <div className="card h-100 glow-tile">
                   <div className="card-body">
                     <h5 className="card-title d-flex align-items-center gap-2">
-                      <FaBookOpen /> Python 1 <ImCool /> 1
+                      <FaBookOpen /> Python1<ImCool />1
                     </h5>
                     <p className="text-secondary mb-3">
                       Open the full set of course notebooks (Python basics, data types, bioinformatics, and ML).

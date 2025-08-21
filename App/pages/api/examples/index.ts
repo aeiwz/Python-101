@@ -4,18 +4,17 @@ import fs from "node:fs";
 import path from "node:path";
 
 /* ----------------------- Config: local + GitHub fallback ----------------------- */
+// Try local first (works when deployed with files bundled into /public/examples)
 const CANDIDATES = [
-  process.env.EXAMPLES_DIR,               // optional override (e.g. "examples")
-  "examples",                             // recommended local folder
-  path.join("pages", "api", "examples"),  // your current location (dev only)
-  path.join("public", "examples"),        // public fallback
-].filter(Boolean) as string[];
+  path.join("public", "examples"),
+] as string[];
 
 // GitHub fallback (override via env if needed)
 const GH_USER = process.env.GH_USER ?? "aeiwz";
 const GH_REPO = process.env.GH_REPO ?? "Python-101";
-const GH_PATH_PREFIX = process.env.GH_PATH_PREFIX ?? "pages/api/examples";
-const GH_TOKEN = process.env.GITHUB_TOKEN; // optional for private repos or higher rate limits
+// 👇 Your files are here in the repo: App/public/examples
+const GH_PATH_PREFIX = process.env.GH_PATH_PREFIX ?? "App/public/examples";
+const GH_TOKEN = process.env.GITHUB_TOKEN; // optional for private repos / higher rate limits
 
 /* --------------------------------- Utilities --------------------------------- */
 function resolveLocalDir(): string {
@@ -88,24 +87,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } else {
       // -------- GitHub fallback --------
-      const listURL = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_PATH_PREFIX}`;
-      const headers: Record<string, string> = { Accept: "application/vnd.github.v3+json" };
-      if (GH_TOKEN) headers.Authorization = `Bearer ${GH_TOKEN}`;
+      const listURL = `https://api.github.com/repos/${encodeURIComponent(GH_USER)}/${encodeURIComponent(GH_REPO)}/contents/${encodeURIComponent(GH_PATH_PREFIX)}`;
 
-      const r = await fetch(listURL, { headers });
+      const baseHeaders: Record<string, string> = {
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "nextjs-examples-list",
+      };
+      if (GH_TOKEN) baseHeaders.Authorization = `Bearer ${GH_TOKEN}`;
+
+      const r = await fetch(listURL, { headers: baseHeaders });
       if (!r.ok) {
         const txt = await r.text();
-        return res.status(r.status).json({ error: `GitHub list failed: ${txt}` });
+        return res.status(r.status).json({
+          error: `GitHub list failed: ${txt || r.statusText}`,
+          hint: `Check GH_USER=${GH_USER} GH_REPO=${GH_REPO} GH_PATH_PREFIX=${GH_PATH_PREFIX}`,
+        });
       }
 
       type GHItem = { name: string; type: "file" | "dir"; download_url: string | null };
       const files = (await r.json()) as GHItem[];
 
       const pyFiles = sortByIndexThenName(
-        files.filter((f) => f.type === "file" && f.name.toLowerCase().endsWith(".py")).map((f) => f.name)
+        files
+          .filter((f) => f.type === "file" && f.name.toLowerCase().endsWith(".py"))
+          .map((f) => f.name)
       );
 
-      // map name -> download_url so we keep the branch-agnostic direct link
       const urlByName = new Map(files.map((f) => [f.name, f.download_url]));
 
       items = [];
@@ -113,7 +120,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const direct = urlByName.get(filename);
         if (!direct) continue;
 
-        const rawRes = await fetch(direct, { headers: GH_TOKEN ? { Authorization: `Bearer ${GH_TOKEN}` } : undefined });
+        const rawRes = await fetch(direct, {
+          headers: GH_TOKEN
+            ? { Authorization: `Bearer ${GH_TOKEN}`, "User-Agent": "nextjs-examples-list" }
+            : { "User-Agent": "nextjs-examples-list" },
+        });
         const raw = rawRes.ok ? await rawRes.text() : "";
 
         items.push({
@@ -137,9 +148,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       : items;
 
     if (req.method === "HEAD") return res.status(200).end();
-    return res
-      .status(200)
-      .json({ items: filtered, count: filtered.length, source: localDir ? "local" : "github" });
+    return res.status(200).json({
+      items: filtered,
+      count: filtered.length,
+      source: localDir ? "local" : "github",
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err?.message ?? "Server error" });
   }

@@ -126,7 +126,7 @@ export default function NotebooksPage() {
 
       {/* ✨ Cool Description Section */}
       <div className="p-4 mb-4 rounded theme-desc-box text-center">
-        <h2 className="fw-bold"> <SiPython /> Python 1 <ImCool /> 1 Notebook Collection</h2>
+        <h2 className="fw-bold"> <SiPython /> Python1<ImCool />1 Notebook Collection</h2>
         <p className="mb-0">
           Explore interactive Jupyter notebooks covering the essentials of Python programming —
           from <strong>basic syntax</strong> and <strong>data structures</strong>
