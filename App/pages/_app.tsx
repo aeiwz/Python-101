@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { ImCool } from "react-icons/im";
-import { SiGooglecolab, SiJupyter, SiPython } from "react-icons/si";
+import { SiPython } from "react-icons/si";
 
 type Theme = "light" | "dark";
 
@@ -65,7 +65,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <nav className="navbar navbar-expand-lg border-bottom mb-3">
           <div className="container-fluid">
             <a className="navbar-brand fw-bold" href="/">
-              <i className="bi "/> < SiPython /> Python 1 <ImCool /> 1
+              <i className="bi "/> < SiPython /> Python1<ImCool />1
             </a>
             <div className="d-flex gap-2">
               <a href="/console" className="btn btn-outline-secondary btn-sm">
