@@ -13,5 +13,3 @@
   </a>
 </p>
 
-<!-- Plain link fallback -->
-🔗 https://python101-sage.vercel.app/notebooks
