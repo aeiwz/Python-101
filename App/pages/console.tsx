@@ -1,10 +1,15 @@
 // pages/console.tsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FiHome, FiPlay, FiTrash2, FiCpu, FiServer, FiAlertTriangle } from "react-icons/fi";
+
+/* --- Editor (CodeMirror) --- */
+import CodeMirror from "@uiw/react-codemirror";
+import { python } from "@codemirror/lang-python";
+import { githubLight, githubDark } from "@uiw/codemirror-theme-github";
 
 type ExampleMeta = { filename: string; slug: string; title: string; summary: string };
 
-// --- Pyodide support maps ---
+/* --- Pyodide support maps --- */
 const PYODIDE_VER = "0.26.1";
 
 // import name -> how to load
@@ -32,6 +37,42 @@ function scanImports(src: string): string[] {
   return [...mods].map((s) => s.split(".")[0]); // top-level
 }
 
+/** Detects dark mode:
+ *  - true if <html> or <body> has class "dark"
+ *  - otherwise falls back to prefers-color-scheme
+ */
+function useIsDark(): boolean {
+  const [dark, setDark] = useState<boolean>(() => {
+    if (typeof document !== "undefined") {
+      const root = document.documentElement;
+      return (
+        root.classList.contains("dark") ||
+        document.body?.classList?.contains("dark") ||
+        window.matchMedia?.("(prefers-color-scheme: dark)").matches
+      );
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    const onMQ = () => setDark((d) => (document.documentElement.classList.contains("dark") ? true : mq?.matches ?? d));
+
+    // Watch .dark class changes (if you toggle theme via class)
+    const obs = new MutationObserver(() => onMQ());
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    document.body && obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+
+    mq?.addEventListener?.("change", onMQ);
+    return () => {
+      obs.disconnect();
+      mq?.removeEventListener?.("change", onMQ);
+    };
+  }, []);
+
+  return dark;
+}
+
 export default function ConsolePage() {
   const [items, setItems] = useState<ExampleMeta[]>([]);
   const [query, setQuery] = useState("");
@@ -40,6 +81,8 @@ export default function ConsolePage() {
   const [out, setOut] = useState<string>("(loading Python runtime…)\n");
   const [ready, setReady] = useState(false);
   const [serverOnlyReason, setServerOnlyReason] = useState<string>("");
+
+  const isDark = useIsDark();
 
   // Pyodide singleton
   const pyodideRef = useRef<any>(null);
@@ -58,6 +101,7 @@ export default function ConsolePage() {
         setItems([]);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Boot Pyodide
@@ -203,9 +247,14 @@ for pkg in ${JSON.stringify([...viaMicropip])}:
       )
     : items;
 
+  /* Editor theme + extensions */
+  const cmTheme = isDark ? githubDark : githubLight;
+  const cmExt = useMemo(() => [python()], []);
+
   return (
     <main className="container py-4">
-      <nav className="navbar navbar-expand-lg border-bottom mb-4">
+      {/* Glass navbar */}
+      <nav className="navbar navbar-expand-lg glass mb-4 px-3 py-2 rounded-3">
         <div className="container-fluid">
           <a href="/" className="btn btn-outline-secondary btn-sm">
             <FiHome className="me-1" /> Back
@@ -220,78 +269,92 @@ for pkg in ${JSON.stringify([...viaMicropip])}:
       <div className="row g-3">
         {/* Sidebar */}
         <div className="col-md-3">
-          <input
-            className="form-control form-control-sm mb-2"
-            placeholder="Search…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <div className="list-group" style={{ maxHeight: 500, overflow: "auto" }}>
-            {filtered.map((ex) => (
-              <button
-                key={ex.slug}
-                className={`list-group-item list-group-item-action${
-                  selected?.slug === ex.slug ? " active" : ""
-                }`}
-                onClick={() => choose(ex)}
-                title={ex.summary}
-              >
-                {ex.title}
-              </button>
-            ))}
-            {!filtered.length && <div className="text-secondary small p-2">No matches</div>}
+          <div className="glass p-2 rounded-3">
+            <input
+              className="form-control form-control-sm mb-2"
+              placeholder="Search…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="list-group" style={{ maxHeight: 500, overflow: "auto" }}>
+              {filtered.map((ex) => (
+                <button
+                  key={ex.slug}
+                  className={`list-group-item list-group-item-action${
+                    selected?.slug === ex.slug ? " active" : ""
+                  }`}
+                  onClick={() => choose(ex)}
+                  title={ex.summary}
+                >
+                  {ex.title}
+                </button>
+              ))}
+              {!filtered.length && <div className="text-secondary small p-2">No matches</div>}
+            </div>
           </div>
         </div>
 
         {/* Editor + Output */}
         <div className="col-md-9">
-          <label className="form-label small text-secondary">
-            Editor {selected ? `• ${selected.title}` : ""}
-          </label>
-          <textarea
-            className="form-control"
-            style={{ minHeight: 280, fontFamily: "ui-monospace, Menlo, monospace" }}
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            spellCheck={false}
-          />
+          <div className="glass p-3 rounded-3">
+            <label className="form-label small text-secondary">
+              Editor {selected ? `• ${selected.title}` : ""}
+            </label>
 
-          {serverOnlyReason && (
-            <div className="alert alert-warning d-flex align-items-start gap-2 mt-2 small">
-              <FiAlertTriangle className="mt-1" />
-              <div>
-                <strong>Native dependency detected.</strong> {serverOnlyReason}
-              </div>
+            {/* CodeMirror editor */}
+            <div className="rounded-3 overflow-hidden glass-editor">
+              <CodeMirror
+                value={code}
+                height="280px"
+                theme={cmTheme}
+                extensions={cmExt}
+                basicSetup={{
+                  lineNumbers: true,
+                  foldGutter: true,
+                  highlightActiveLine: true,
+                  bracketMatching: true,
+                  autocompletion: true,
+                }}
+                onChange={(val) => setCode(val)}
+              />
             </div>
-          )}
 
-          <div className="d-flex gap-2 mt-2">
-            <button className="btn btn-primary" onClick={runBrowser} disabled={!ready}>
-              <FiPlay className="me-1" /> Run (in browser) <span className="ms-1 small"><FiCpu /></span>
-            </button>
-            <button className="btn btn-outline-secondary" onClick={() => setOut("")}>
-              <FiTrash2 className="me-1" /> Clear
-            </button>
-            <button
-              className="btn btn-outline-primary ms-auto"
-              title="Execute on server with native Python (supports scikit-learn, etc.)"
-              onClick={runServer}
+            {serverOnlyReason && (
+              <div className="alert alert-warning glass border-0 d-flex align-items-start gap-2 mt-2 small mb-0 rounded-3">
+                <FiAlertTriangle className="mt-1" />
+                <div>
+                  <strong>Native dependency detected.</strong> {serverOnlyReason}
+                </div>
+              </div>
+            )}
+
+            <div className="d-flex gap-2 mt-2">
+              <button className="btn btn-primary" onClick={runBrowser} disabled={!ready}>
+                <FiPlay className="me-1" /> Run{" "}
+                <span className="ms-1 small">
+                </span>
+              </button>
+              <button className="btn btn-outline-secondary" onClick={() => setOut("")}>
+                <FiTrash2 className="me-1" /> Clear
+              </button>
+            </div>
+
+            <label className="form-label small text-secondary mt-3">Console Output</label>
+            <pre
+              className="border rounded p-2 glass"
+              style={{ height: 280, overflow: "auto", whiteSpace: "pre-wrap", background: "transparent" }}
             >
-              <FiServer className="me-1" /> Run on Server
-            </button>
-          </div>
+              {out}
+            </pre>
 
-          <label className="form-label small text-secondary mt-3">Console Output</label>
-          <pre
-            className="border rounded p-2"
-            style={{ height: 280, overflow: "auto", whiteSpace: "pre-wrap" }}
-          >
-            {out}
-          </pre>
-
-          <div className="alert alert-info mt-3 small mb-0">
-            Tip: Browser mode supports many scientific packages via Pyodide (e.g., <code>numpy</code>, <code>pandas</code>, <code>matplotlib</code>).
-            Use <strong>Run on Server</strong> for native libs (e.g., <code>scikit‑learn</code>).
+            <div className="alert alert-info glass border-0 mt-3 small mb-0 rounded-3">
+              <strong>Tip:</strong> Browser mode (Pyodide) supports many scientific packages
+              like <code>numpy</code>, and <code>pandas</code>. For
+              packages that need native extensions (e.g., <code>scikit‑learn</code>) or when
+              you need to <em>see plots</em> (matplotlib / seaborn / plotly), please run on your
+              <strong> local console</strong> (or Jupyter). The in‑browser runtime has no GUI
+              backends.
+            </div>
           </div>
         </div>
       </div>

@@ -365,3 +365,50 @@ html, body {
   backdrop-filter: blur(8px) saturate(120%);
   transition: background-color .25s ease, border-color .25s ease;
 }
+
+.card-opacity {
+  background-color: rgba(255, 255, 255, 0.10); /* light mode */
+  backdrop-filter: blur(6px); /* optional glass effect */
+}
+
+.dark .card-opacity {
+  background-color: rgba(17, 25, 40, 0.10); /* darker for dark mode */
+}
+
+/* Glassy panels for the console page */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+}
+
+.dark .glass {
+  background: rgba(13, 18, 34, 0.55);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Make list items play nice on transparent panels */
+.glass .list-group-item {
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.glass .list-group-item.active {
+  background-color: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+/* Light */
+:root {
+  --editor-bg: #f6f8fa;
+  --editor-border: #d0d7de;
+}
+.dark {
+  --editor-bg: #0d1117;
+  --editor-border: #30363d;
+}
+
+.editor {
+  background: var(--editor-bg);
+  border: 1px solid var(--editor-border);
+}

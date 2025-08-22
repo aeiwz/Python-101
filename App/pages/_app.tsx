@@ -104,7 +104,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <nav className="navbar navbar-expand-lg border-bottom mb-3">
           <div className="container-fluid">
             <a className="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
-              <SiPython /> <span>Python1</span> <ImCool />1
+              <SiPython /> <span>Python1</span><ImCool />1
             </a>
             <div className="d-flex gap-2">
               <a href="/console" className="btn btn-outline-secondary btn-sm">

@@ -9,7 +9,7 @@ import { IoRocketOutline } from "react-icons/io5";
 export default function Home() {
   return (
     <main className="container py-4">
-      <div className="card border-0 shadow-sm bg-surface">
+      <div className="card border-0 shadow-sm bg-surface card glow-tile card-opacity">
         <div className="card-body p-4 p-lg-5">
           {/* Hero */}
           <section className="text-center">
