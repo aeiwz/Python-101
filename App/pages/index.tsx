@@ -1,22 +1,36 @@
-import { ImCool } from "react-icons/im";
-import {
-  FaRobot,
-  FaTerminal,
-  FaBookOpen
-} from "react-icons/fa";
-import { IoRocketOutline } from "react-icons/io5";
+// pages/index.tsx
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+
+// Load react-icons ONLY on the client
+const FaRobot = dynamic(() => import("react-icons/fa").then(m => m.FaRobot), { ssr: false });
+const FaTerminal = dynamic(() => import("react-icons/fa").then(m => m.FaTerminal), { ssr: false });
+const FaBookOpen = dynamic(() => import("react-icons/fa").then(m => m.FaBookOpen), { ssr: false });
+const ImCool = dynamic(() => import("react-icons/im").then(m => m.ImCool), { ssr: false });
+const IoRocketOutline = dynamic(() => import("react-icons/io5").then(m => m.IoRocketOutline), { ssr: false });
 
 export default function Home() {
+  const [views, setViews] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Increment + fetch total for this page
+    fetch("/api/hit?page=landing", { method: "POST" })
+      .then(() => fetch("/api/views?page=landing"))
+      .then((r) => r.json())
+      .then((d) => setViews(d.total))
+      .catch(() => {});
+  }, []);
+
   return (
     <main className="container py-4">
-      <div className="card border-0 shadow-sm bg-surface card glow-tile card-opacity">
+      <div className="card border-0 shadow-sm bg-surface glow-tile card-opacity">
         <div className="card-body p-4 p-lg-5">
           {/* Hero */}
           <section className="text-center">
             <h1 className="display-4 fw-bold mb-3 lh-1">
               Learn <span className="brand-grad">Python</span> - Build Anything.
             </h1>
-            <p className="lead text-secondary mb-4 mx-auto" style={{ maxWidth: 820 }}>
+            <p className="lead text-secondary mb-2 mx-auto" style={{ maxWidth: 820 }}>
               From programming basics to data analysis and machine learning.
             </p>
 
@@ -38,7 +52,7 @@ export default function Home() {
                 <div className="card h-100 glow-tile">
                   <div className="card-body">
                     <h5 className="card-title d-flex align-items-center gap-2">
-                      <FaBookOpen /> Python1<ImCool />1
+                      <FaBookOpen /> Python1 <ImCool /> 1
                     </h5>
                     <p className="text-secondary mb-3">
                       Open the full set of course notebooks (Python basics, data types, bioinformatics, and ML).
@@ -75,6 +89,10 @@ export default function Home() {
             </p>
           </section>
         </div>
+      </div>
+      {/* Visits badge */}
+      <div className="text-secondary small mb-4" aria-live="polite">
+      Visits: {views === null ? "—" : views.toLocaleString()}
       </div>
     </main>
   );

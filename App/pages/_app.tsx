@@ -7,7 +7,8 @@ import Footer from "@/components/Footer";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { ImCool } from "react-icons/im";
-import { SiPython } from "react-icons/si";
+import { SiPython, SiJupyter } from "react-icons/si";
+
 
 type Theme = "light" | "dark";
 
@@ -93,10 +94,10 @@ export default function App({ Component, pageProps }: AppProps) {
 
       {/* Animated background behind everything */}
       <AnimatedBackground
-        density={0.00005}      // mobile-friendly
-        maxParticles={120}
-        targetFps={30}
-        linkDistance={90}
+        density={0.0005}      // mobile-friendly
+        maxParticles={180}
+        targetFps={60}
+        linkDistance={40}
       />
 
       {/* Your app content above the canvas */}
@@ -107,6 +108,9 @@ export default function App({ Component, pageProps }: AppProps) {
               <SiPython /> <span>Python1</span><ImCool />1
             </a>
             <div className="d-flex gap-2">
+              <a href="/notebooks" className="btn btn-outline-secondary btn-sm">
+                <i className="bi" /> < SiJupyter /> Notebook
+              </a>
               <a href="/console" className="btn btn-outline-secondary btn-sm">
                 <i className="bi bi-terminal" /> Console
               </a>
